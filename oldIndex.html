@@ -737,7 +737,7 @@ function buildSignPicker() {
 const RATING_LABELS = ["Not at all", "Slightly", "Somewhat", "Quite well", "Perfectly"];
 const CONF_LABELS   = ["Guessing",   "Slight",   "Moderate", "Fairly sure","Certain"];
 
-function buildRatingRow(containerId, setter, labels, afterChange) {
+function buildRatingRow(containerId, varName, labels, afterChange) {
   const c = document.getElementById(containerId);
   c.innerHTML = "";
   labels.forEach((lbl, i) => {
@@ -748,7 +748,7 @@ function buildRatingRow(containerId, setter, labels, afterChange) {
     b.onclick = () => {
       document.querySelectorAll(`#${containerId} .r-chip`).forEach(x => x.classList.remove("sel"));
       b.classList.add("sel");
-      setter(n);
+      window[varName] = n;
       if (afterChange) afterChange();
     };
     c.appendChild(b);
@@ -764,9 +764,9 @@ function newParticipant() {
   pName=""; pSign=""; pRandSign=""; pShowA="";
   pRatingA=0; pRatingB=0; pPickedReal=""; pConfidence=0;
   buildSignPicker();
-  buildRatingRow("rating-A", v => { pRatingA = v; }, RATING_LABELS, checkQ3Ready);
-  buildRatingRow("rating-B", v => { pRatingB = v; }, RATING_LABELS, checkQ3Ready);
-  buildRatingRow("confidence-row", v => { pConfidence = v; }, CONF_LABELS, () => checkQ("q5-next", true));
+  buildRatingRow("rating-A", "pRatingA", RATING_LABELS, checkQ3Ready);
+  buildRatingRow("rating-B", "pRatingB", RATING_LABELS, checkQ3Ready);
+  buildRatingRow("confidence-row", "pConfidence", CONF_LABELS, () => checkQ("q5-next", true));
   document.getElementById("q1-ans").value = "";
   checkQ("q1-next", false);
   checkQ("q2-next", false);
