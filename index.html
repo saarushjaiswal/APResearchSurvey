@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horoscope Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================
+     RESEARCHER: Edit the horoscopes and debrief below.
+     Search for "RESEARCHER CONFIG" to jump straight there.
+     ===================================================== */
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #F7F4EE;
+    --surface:  #FFFFFF;
+    --ink:      #1A1712;
+    --ink2:     #5A5650;
+    --ink3:     #9A958F;
+    --accent:   #2A4A7F;
+    --accent2:  #C8A96E;
+    --border:   rgba(26,23,18,0.12);
+    --border2:  rgba(26,23,18,0.06);
+    --success:  #1E5C3A;
+    --success-bg: #EAF4EE;
+    --danger:   #8B2020;
+    --danger-bg:#FAE8E8;
+    --radius:   12px;
+    --radius-sm:8px;
+  }
+
+  html, body {
+    min-height: 100%;
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* ---- LAYOUT ---- */
+  .shell {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 0 1rem 4rem;
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 0 1rem;
+    border-bottom: 1px solid var(--border2);
+    margin-bottom: 2rem;
+  }
+
+  .wordmark {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .wordmark em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .pill-badge {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ---- SCREEN SWITCHING ---- */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ---- CARDS ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ---- PROGRESS ---- */
+  .progress-wrap {
+    margin-bottom: 2rem;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink3);
+    margin-bottom: 6px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .progress-track {
+    height: 3px;
+    background: var(--border2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ---- TYPOGRAPHY ---- */
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--ink3);
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .q-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    line-height: 1.3;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+  }
+
+  .q-hint {
+    font-size: 13px;
+    color: var(--ink2);
+    margin-bottom: 1.25rem;
+  }
+
+  /* ---- INPUTS ---- */
+  input[type=text], textarea {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+  input[type=text]:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  textarea { min-height: 80px; }
+
+  /* ---- SIGN GRID ---- */
+  .sign-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 0.5rem;
+  }
+
+  .sign-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink2);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    line-height: 1.3;
+  }
+  .sign-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .sign-chip.sel {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  /* ---- HOROSCOPE BOXES ---- */
+  .horo-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--ink3);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .horo-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.1rem;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--ink);
+    margin-bottom: 0.75rem;
+    font-style: italic;
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+  }
+
+  /* ---- RATING CHIPS ---- */
+  .rating-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .r-chip {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--ink2);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .r-chip .r-num {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .r-chip:hover { border-color: var(--accent2); }
+  .r-chip.sel {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: var(--ink);
+  }
+  .r-chip.sel .r-num { color: var(--ink); }
+
+  /* ---- PICK BUTTONS ---- */
+  .pick-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 0.5rem;
+  }
+  .pick-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .pick-btn:hover { border-color: var(--accent); }
+  .pick-btn.sel {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* ---- PRIMARY BUTTON ---- */
+  .btn-primary {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 0.75rem;
+    letter-spacing: 0.01em;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-secondary {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    background: transparent;
+    color: var(--ink2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 0.5rem;
+  }
+  .btn-secondary:hover { background: var(--surface); }
+
+  /* ---- REVEAL BLOCK ---- */
+  .reveal-card {
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1rem;
+  }
+  .reveal-correct { background: var(--success-bg); border: 1px solid rgba(30,92,58,0.25); }
+  .reveal-wrong   { background: var(--danger-bg);  border: 1px solid rgba(139,32,32,0.25); }
+  .reveal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .reveal-correct .reveal-title { color: var(--success); }
+  .reveal-wrong   .reveal-title { color: var(--danger); }
+  .reveal-body { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+
+  /* ---- ADMIN / RESULTS ---- */
+  .admin-bar {
+    background: var(--ink);
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    padding: 8px 1rem;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+  .admin-bar a {
+    color: var(--accent2);
+    cursor: pointer;
+    text-decoration: underline;
+    margin-left: 1rem;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--ink);
+    display: block;
+  }
+  .stat-lbl {
+    font-size: 11px;
+    color: var(--ink3);
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+  }
+
+  .tab-row {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+  }
+  .tab {
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink3);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-weight: 500;
+    transition: color 0.12s;
+  }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+  .resp-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+  .resp-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .resp-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--ink);
+  }
+  .resp-correct { font-size: 12px; font-weight: 500; color: var(--success); }
+  .resp-wrong   { font-size: 12px; font-weight: 500; color: var(--danger); }
+  .resp-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border2);
+    font-size: 13px;
+    color: var(--ink2);
+  }
+  .resp-row:last-child { border-bottom: none; }
+  .resp-val { color: var(--ink); font-weight: 500; }
+
+  .csv-box {
+    font-family: monospace;
+    font-size: 12px;
+    min-height: 180px;
+    color: var(--ink2);
+    resize: vertical;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.25rem 0;
+  }
+
+  /* ---- ADMIN GATE ---- */
+  .admin-gate {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,23,18,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+  .admin-gate-box {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 2rem;
+    width: min(380px, 90vw);
+    border: 1px solid var(--border);
+  }
+  .admin-gate-box .q-title { font-size: 20px; margin-bottom: 0.5rem; }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .screen.active { animation: fadeUp 0.25s ease; }
+
+</style>
+</head>
+<body>
+
+<!-- Admin bar (only visible on results screen) -->
+<div class="admin-bar" id="admin-bar" style="display:none">
+  Researcher view
+  <a onclick="showScreen('screen-participant'); newParticipant()">+ New participant</a>
+  <a onclick="confirmClear()">Clear all data</a>
+</div>
+
+<!-- Admin gate overlay -->
+<div class="admin-gate" id="admin-gate" style="display:none">
+  <div class="admin-gate-box">
+    <div class="q-title">Researcher access</div>
+    <p class="q-hint" style="margin-bottom:1rem">Enter the admin password to view results.</p>
+    <input type="text" id="admin-pw-input" placeholder="Password" style="margin-bottom:0.75rem">
+    <button class="btn-primary" onclick="checkAdminPw()">Enter</button>
+    <button class="btn-secondary" onclick="closeAdminGate()">Cancel</button>
+  </div>
+</div>
+
+<div class="shell">
+
+  <div class="top-bar">
+    <div class="wordmark">Star<em>Sign</em> Study</div>
+    <div class="pill-badge" id="top-badge">PARTICIPANT</div>
+  </div>
+
+  <!-- ============================================================
+       PARTICIPANT SCREEN
+       ============================================================ -->
+  <div class="screen active" id="screen-participant">
+
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span id="step-label">Step 1 of 5</span>
+        <span id="step-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Q1 -->
+    <div class="q-panel" id="q1">
+      <div class="card">
+        <div class="eyebrow">Question 1</div>
+        <div class="q-title">What's your first name?</div>
+        <div class="q-hint">Just your first name — this is only used to label your response.</div>
+        <input type="text" id="q1-ans" placeholder="Your name" oninput="checkQ('q1-next', this.value.trim().length > 0)" autocomplete="off">
+      </div>
+      <button class="btn-primary" id="q1-next" disabled onclick="goQ2()">Continue →</button>
+      <button class="btn-secondary" onclick="openAdminGate()">Researcher login</button>
+    </div>
+
+    <!-- Q2 -->
+    <div class="q-panel" id="q2" style="display:none">
+      <div class="card">
+        <div class="eyebrow">Question 2</div>
+        <div class="q-title">What's your star sign?</div>
+        <div class="q-hint">Select the sign that matches your birth date.</div>
+        <div class="sign-grid" id="sign-picker"></div>
+      </div>
+      <button class="btn-primary" id="q2-next" disabled onclick="goQ3()">Continue →</button>
+    </div>
+
+    <!-- Q3 -->
+    <div class="q-panel" id="q3" style="display:none">
+      <div class="card">
+        <div class="eyebrow">Question 3</div>
+        <div class="q-title">Read both horoscopes</div>
+        <div class="q-hint">Rate how accurately each one describes your personality and life — honestly.</div>
+
+        <div class="horo-label">Horoscope A</div>
+        <div class="horo-box" id="horo-A"></div>
+        <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">How well does <strong>A</strong> describe you?</p>
+        <div class="rating-row" id="rating-A"></div>
+
+        <div class="divider"></div>
+
+        <div class="horo-label">Horoscope B</div>
+        <div class="horo-box" id="horo-B"></div>
+        <p style="font-size:13px;color:var(--ink2);margin-bottom:8px">How well does <strong>B</strong> describe you?</p>
+        <div class="rating-row" id="rating-B"></div>
+      </div>
+      <button class="btn-primary" id="q3-next" disabled onclick="goQ4()">Continue →</button>
+    </div>
+
+    <!-- Q4 -->
+    <div class="q-panel" id="q4" style="display:none">
+      <div class="card">
+        <div class="eyebrow">Question 4</div>
+        <div class="q-title">Which one is your real horoscope?</div>
+        <div class="q-hint">Which horoscope was written for your actual sign?</div>
+        <div class="pick-row">
+          <button class="pick-btn" id="pick-A" onclick="pickReal('A')">Horoscope A</button>
+          <button class="pick-btn" id="pick-B" onclick="pickReal('B')">Horoscope B</button>
+        </div>
+      </div>
+      <button class="btn-primary" id="q4-next" disabled onclick="goQ5()">Continue →</button>
+    </div>
+
+    <!-- Q5 -->
+    <div class="q-panel" id="q5" style="display:none">
+      <div class="card">
+        <div class="eyebrow">Question 5</div>
+        <div class="q-title">How confident are you?</div>
+        <div class="q-hint">Rate your confidence in your guess above.</div>
+        <div class="rating-row" id="confidence-row"></div>
+      </div>
+      <button class="btn-primary" id="q5-next" disabled onclick="goDebrief()">Submit my answers →</button>
+    </div>
+
+    <!-- Debrief -->
+    <div class="q-panel" id="debrief" style="display:none">
+      <div id="reveal-block"></div>
+      <div class="card">
+        <div class="eyebrow">Study debrief</div>
+        <div id="debrief-content" style="font-size:15px;line-height:1.75;color:var(--ink)"></div>
+      </div>
+      <button class="btn-secondary" onclick="finishParticipant()">Done</button>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       RESULTS SCREEN (researcher only)
+       ============================================================ -->
+  <div class="screen" id="screen-results">
+
+    <div class="eyebrow" style="margin-bottom:1rem">Study results</div>
+    <div class="stat-grid" id="stat-grid"></div>
+
+    <div class="tab-row">
+      <div class="tab active" id="tab-responses" onclick="switchTab('responses')">Responses</div>
+      <div class="tab" id="tab-export" onclick="switchTab('export')">Export CSV</div>
+    </div>
+
+    <div id="view-responses"></div>
+    <div id="view-export" style="display:none">
+      <div class="card">
+        <div class="q-hint" style="margin-bottom:0.75rem">Copy into Excel, Google Sheets, or SPSS.</div>
+        <textarea class="csv-box" id="csv-out" readonly></textarea>
+        <button class="btn-primary" onclick="copyCSV()" style="margin-top:0.75rem">Copy to clipboard</button>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /shell -->
+
+<script>
+/* =====================================================
+   RESEARCHER CONFIG — Edit everything in this block.
+   ===================================================== */
+
+const CONFIG = {
+
+  /* Admin password to access results */
+  adminPassword: "stars2025",
+
+  /* Your debrief text shown to participants after submitting */
+  debrief: `Thank you for participating! This was a study on the Barnum effect — the psychological tendency to accept vague, general personality descriptions as uniquely personal.
+
+We showed you two horoscopes: one written for your actual star sign, and one chosen randomly from another sign. The real question was whether you could tell them apart — and whether you rated your "real" one higher.
+
+Research consistently shows that people tend to rate horoscopes as accurate regardless of which sign they were written for. If you found it hard to tell the difference, you're not alone.
+
+Your responses will be kept confidential and used only for this study. Thank you again for your time!`,
+
+  /* Horoscopes — paste each sign's text below.
+     Keep the keys exactly as they are (lowercase). */
+  horoscopes: {
+    "Aries":       "PASTE ARIES HOROSCOPE HERE",
+    "Taurus":      "PASTE TAURUS HOROSCOPE HERE",
+    "Gemini":      "PASTE GEMINI HOROSCOPE HERE",
+    "Cancer":      "PASTE CANCER HOROSCOPE HERE",
+    "Leo":         "PASTE LEO HOROSCOPE HERE",
+    "Virgo":       "PASTE VIRGO HOROSCOPE HERE",
+    "Libra":       "PASTE LIBRA HOROSCOPE HERE",
+    "Scorpio":     "PASTE SCORPIO HOROSCOPE HERE",
+    "Sagittarius": "PASTE SAGITTARIUS HOROSCOPE HERE",
+    "Capricorn":   "PASTE CAPRICORN HOROSCOPE HERE",
+    "Aquarius":    "PASTE AQUARIUS HOROSCOPE HERE",
+    "Pisces":      "PASTE PISCES HOROSCOPE HERE",
+  }
+};
+
+/* =====================================================
+   END OF RESEARCHER CONFIG — Don't edit below this line
+   unless you know what you're doing.
+   ===================================================== */
+
+const SIGNS = [
+  {name:"Aries",       sym:"♈"},
+  {name:"Taurus",      sym:"♉"},
+  {name:"Gemini",      sym:"♊"},
+  {name:"Cancer",      sym:"♋"},
+  {name:"Leo",         sym:"♌"},
+  {name:"Virgo",       sym:"♍"},
+  {name:"Libra",       sym:"♎"},
+  {name:"Scorpio",     sym:"♏"},
+  {name:"Sagittarius", sym:"♐"},
+  {name:"Capricorn",   sym:"♑"},
+  {name:"Aquarius",    sym:"♒"},
+  {name:"Pisces",      sym:"♓"},
+];
+
+const STORAGE_KEY = "horoscope_study_v1";
+
+/* ---- State ---- */
+let pName="", pSign="", pRandSign="", pShowA="";
+let pRatingA=0, pRatingB=0, pPickedReal="", pConfidence=0;
+
+/* ---- Storage ---- */
+function loadResponses() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+  catch(e) { return []; }
+}
+function saveResponse(r) {
+  const arr = loadResponses();
+  arr.push(r);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+}
+
+/* ---- Screen switching ---- */
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  const isResults = id === "screen-results";
+  document.getElementById("admin-bar").style.display = isResults ? "block" : "none";
+  document.getElementById("top-badge").textContent = isResults ? "RESEARCHER" : "PARTICIPANT";
+  window.scrollTo(0,0);
+}
+
+function showPanel(id) {
+  document.querySelectorAll(".q-panel").forEach(p => p.style.display = "none");
+  const el = document.getElementById(id);
+  el.style.display = "block";
+  el.style.animation = "fadeUp 0.25s ease";
+  window.scrollTo(0,0);
+}
+
+function setProgress(n, total) {
+  const pct = Math.round((n / total) * 100);
+  document.getElementById("prog-fill").style.width = pct + "%";
+  document.getElementById("step-label").textContent = "Step " + n + " of " + total;
+  document.getElementById("step-pct").textContent = pct + "%";
+}
+
+function checkQ(btnId, ok) {
+  document.getElementById(btnId).disabled = !ok;
+}
+
+/* ---- Build sign picker ---- */
+function buildSignPicker() {
+  const c = document.getElementById("sign-picker");
+  c.innerHTML = "";
+  SIGNS.forEach(s => {
+    const b = document.createElement("button");
+    b.className = "sign-chip";
+    b.innerHTML = `<span style="font-size:18px;display:block;margin-bottom:3px">${s.sym}</span>${s.name}`;
+    b.onclick = () => {
+      document.querySelectorAll(".sign-chip").forEach(x => x.classList.remove("sel"));
+      b.classList.add("sel");
+      pSign = s.name;
+      checkQ("q2-next", true);
+    };
+    c.appendChild(b);
+  });
+}
+
+/* ---- Build rating rows ---- */
+const RATING_LABELS = ["Not at all", "Slightly", "Somewhat", "Quite well", "Perfectly"];
+const CONF_LABELS   = ["Guessing",   "Slight",   "Moderate", "Fairly sure","Certain"];
+
+function buildRatingRow(containerId, varName, labels, afterChange) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = "";
+  labels.forEach((lbl, i) => {
+    const n = i + 1;
+    const b = document.createElement("button");
+    b.className = "r-chip";
+    b.innerHTML = `<span class="r-num">${n}</span>${lbl}`;
+    b.onclick = () => {
+      document.querySelectorAll(`#${containerId} .r-chip`).forEach(x => x.classList.remove("sel"));
+      b.classList.add("sel");
+      window[varName] = n;
+      if (afterChange) afterChange();
+    };
+    c.appendChild(b);
+  });
+}
+
+function checkQ3Ready() {
+  checkQ("q3-next", pRatingA > 0 && pRatingB > 0);
+}
+
+/* ---- Participant flow ---- */
+function newParticipant() {
+  pName=""; pSign=""; pRandSign=""; pShowA="";
+  pRatingA=0; pRatingB=0; pPickedReal=""; pConfidence=0;
+  buildSignPicker();
+  buildRatingRow("rating-A", "pRatingA", RATING_LABELS, checkQ3Ready);
+  buildRatingRow("rating-B", "pRatingB", RATING_LABELS, checkQ3Ready);
+  buildRatingRow("confidence-row", "pConfidence", CONF_LABELS, () => checkQ("q5-next", true));
+  document.getElementById("q1-ans").value = "";
+  checkQ("q1-next", false);
+  checkQ("q2-next", false);
+  checkQ("q3-next", false);
+  checkQ("q4-next", false);
+  checkQ("q5-next", false);
+  setProgress(0, 5);
+  showPanel("q1");
+}
+
+function goQ2() {
+  pName = document.getElementById("q1-ans").value.trim();
+  setProgress(1, 5);
+  showPanel("q2");
+}
+
+function goQ3() {
+  // Pick random sign different from pSign
+  const others = SIGNS.map(s => s.name).filter(n => n !== pSign);
+  pRandSign = others[Math.floor(Math.random() * others.length)];
+  // Randomly assign A/B
+  pShowA = Math.random() < 0.5 ? pSign : pRandSign;
+  const pShowB = pShowA === pSign ? pRandSign : pSign;
+  document.getElementById("horo-A").textContent = CONFIG.horoscopes[pShowA] || "(missing)";
+  document.getElementById("horo-B").textContent = CONFIG.horoscopes[pShowB] || "(missing)";
+  // Reset ratings
+  pRatingA = 0; pRatingB = 0;
+  document.querySelectorAll("#rating-A .r-chip, #rating-B .r-chip").forEach(x => x.classList.remove("sel"));
+  checkQ("q3-next", false);
+  setProgress(2, 5);
+  showPanel("q3");
+}
+
+function goQ4() {
+  document.getElementById("pick-A").classList.remove("sel");
+  document.getElementById("pick-B").classList.remove("sel");
+  checkQ("q4-next", false);
+  setProgress(3, 5);
+  showPanel("q4");
+}
+
+function pickReal(letter) {
+  pPickedReal = letter;
+  document.getElementById("pick-A").classList.toggle("sel", letter === "A");
+  document.getElementById("pick-B").classList.toggle("sel", letter === "B");
+  checkQ("q4-next", true);
+}
+
+function goQ5() {
+  pConfidence = 0;
+  document.querySelectorAll("#confidence-row .r-chip").forEach(x => x.classList.remove("sel"));
+  checkQ("q5-next", false);
+  setProgress(4, 5);
+  showPanel("q5");
+}
+
+function goDebrief() {
+  setProgress(5, 5);
+
+  const realIsA = pShowA === pSign;
+  const correct = (pPickedReal === "A" && realIsA) || (pPickedReal === "B" && !realIsA);
+  const realLabel = realIsA ? "A" : "B";
+  const randLabel = realIsA ? "B" : "A";
+
+  // Save to localStorage
+  saveResponse({
+    timestamp: new Date().toISOString(),
+    name:        pName,
+    sign:        pSign,
+    randSign:    pRandSign,
+    realWasA:    realIsA,
+    ratingReal:  realIsA ? pRatingA : pRatingB,
+    ratingRandom:realIsA ? pRatingB : pRatingA,
+    pickedLetter:pPickedReal,
+    correct:     correct,
+    confidence:  pConfidence,
+  });
+
+  // Reveal block
+  document.getElementById("reveal-block").innerHTML = `
+    <div class="reveal-card ${correct ? "reveal-correct" : "reveal-wrong"}">
+      <div class="reveal-title">${correct ? "✓ You identified it correctly!" : "✗ It was actually the other one."}</div>
+      <div class="reveal-body">
+        Horoscope ${realLabel} was your real <strong>${pSign}</strong> horoscope.<br>
+        Horoscope ${randLabel} was a <strong>${pRandSign}</strong> horoscope shown to you randomly.
+      </div>
+    </div>
+  `;
+
+  document.getElementById("debrief-content").textContent = CONFIG.debrief;
+  showPanel("debrief");
+}
+
+function finishParticipant() {
+  // Return to Q1 for next participant
+  newParticipant();
+}
+
+/* ---- Admin gate ---- */
+function openAdminGate() {
+  document.getElementById("admin-pw-input").value = "";
+  document.getElementById("admin-gate").style.display = "flex";
+  setTimeout(() => document.getElementById("admin-pw-input").focus(), 50);
+}
+function closeAdminGate() {
+  document.getElementById("admin-gate").style.display = "none";
+}
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeAdminGate();
+  if (e.key === "Enter" && document.getElementById("admin-gate").style.display !== "none") checkAdminPw();
+});
+function checkAdminPw() {
+  const pw = document.getElementById("admin-pw-input").value;
+  if (pw === CONFIG.adminPassword) {
+    closeAdminGate();
+    showScreen("screen-results");
+    renderResults();
+  } else {
+    document.getElementById("admin-pw-input").style.borderColor = "#c0392b";
+    setTimeout(() => document.getElementById("admin-pw-input").style.borderColor = "", 1000);
+  }
+}
+
+function confirmClear() {
+  if (confirm("Delete all " + loadResponses().length + " responses? This cannot be undone.")) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderResults();
+  }
+}
+
+/* ---- Results rendering ---- */
+function renderResults() {
+  const rs = loadResponses();
+  const n = rs.length;
+  const correct = rs.filter(r => r.correct).length;
+  const avgReal = n ? (rs.reduce((s,r) => s + r.ratingReal, 0) / n).toFixed(2) : "—";
+  const avgRand = n ? (rs.reduce((s,r) => s + r.ratingRandom, 0) / n).toFixed(2) : "—";
+
+  document.getElementById("stat-grid").innerHTML = `
+    <div class="stat-card">
+      <span class="stat-num">${n}</span>
+      <div class="stat-lbl">Participants</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">${n ? Math.round(correct/n*100) : "—"}%</span>
+      <div class="stat-lbl">Identified correctly</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num">${avgReal}</span>
+      <div class="stat-lbl">Avg real rating</div>
+    </div>
+  `;
+
+  const vr = document.getElementById("view-responses");
+  if (!n) {
+    vr.innerHTML = `<p style="color:var(--ink3);font-size:13px;text-align:center;padding:2rem 0">No responses yet.</p>`;
+  } else {
+    vr.innerHTML = rs.slice().reverse().map((r,i) => `
+      <div class="resp-card">
+        <div class="resp-top">
+          <div class="resp-name">${r.name} <span style="font-family:'DM Sans';font-size:13px;color:var(--ink3)">${r.sign}</span></div>
+          <div class="${r.correct ? "resp-correct" : "resp-wrong"}">${r.correct ? "✓ correct" : "✗ wrong"}</div>
+        </div>
+        <div class="resp-row"><span>Real (${r.sign}) rating</span><span class="resp-val">${r.ratingReal}/5</span></div>
+        <div class="resp-row"><span>Random (${r.randSign}) rating</span><span class="resp-val">${r.ratingRandom}/5</span></div>
+        <div class="resp-row"><span>Confidence</span><span class="resp-val">${r.confidence}/5</span></div>
+        <div class="resp-row"><span>Submitted</span><span class="resp-val">${new Date(r.timestamp).toLocaleString()}</span></div>
+      </div>
+    `).join("");
+  }
+
+  // CSV
+  const header = "Timestamp,Name,Sign,RandomSign,RatingReal,RatingRandom,PickedCorrectly,Confidence";
+  const rows = rs.map(r => [
+    r.timestamp, r.name, r.sign, r.randSign,
+    r.ratingReal, r.ratingRandom,
+    r.correct ? "yes" : "no",
+    r.confidence
+  ].join(","));
+  document.getElementById("csv-out").value = [header, ...rows].join("\n");
+}
+
+function switchTab(tab) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+  document.getElementById("view-responses").style.display = tab === "responses" ? "block" : "none";
+  document.getElementById("view-export").style.display = tab === "export" ? "block" : "none";
+}
+
+function copyCSV() {
+  const box = document.getElementById("csv-out");
+  box.select();
+  navigator.clipboard.writeText(box.value).then(() => alert("Copied!")).catch(() => {
+    document.execCommand("copy");
+    alert("Copied!");
+  });
+}
+
+/* ---- Boot ---- */
+newParticipant();
+</script>
+</body>
+</html>
